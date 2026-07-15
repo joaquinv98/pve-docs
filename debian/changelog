@@ -1,3 +1,21 @@
+pve-docs (9.2.3+neatech4) trixie; urgency=medium
+
+  * clarify management endpoint availability requirements
+
+ -- Joaquin Varela <joaquinv98@users.noreply.github.com>  Wed, 15 Jul 2026 01:16:00 -0300
+
+pve-docs (9.2.3+neatech3) trixie; urgency=medium
+
+  * document the empty-dataset requirement for storage removal
+
+ -- Joaquin Varela <joaquinv98@users.noreply.github.com>  Wed, 15 Jul 2026 01:12:00 -0300
+
+pve-docs (9.2.3+neatech2) trixie; urgency=medium
+
+  * document interface preflight and safe subsystem removal
+
+ -- Joaquin Varela <joaquinv98@users.noreply.github.com>  Wed, 15 Jul 2026 01:05:00 -0300
+
 pve-docs (9.2.3+neatech1) trixie; urgency=medium
 
   * document the native ZFS over NVMe/TCP storage backend
@@ -2632,4 +2650,3 @@ pve-docs (4.1-1) unstable; urgency=medium
   * first release
 
  -- Proxmox Support Team <support@proxmox.com>  Tue, 05 Apr 2016 18:02:59 +0200
-
