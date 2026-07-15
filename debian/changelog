@@ -1,3 +1,9 @@
+pve-docs (9.2.3+neatech1) trixie; urgency=medium
+
+  * document the native ZFS over NVMe/TCP storage backend
+
+ -- Joaquin Varela <joaquinv98@users.noreply.github.com>  Tue, 14 Jul 2026 23:52:38 -0300
+
 pve-docs (9.2.3) trixie; urgency=medium
 
   * ha-manager: drop the technology preview status from the CRS load balancer.
