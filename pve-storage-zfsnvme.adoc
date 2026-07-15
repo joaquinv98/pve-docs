@@ -85,6 +85,13 @@ nvme-ctrl-loss-tmo::
 How long a controller remains reconnectable after path loss. `-1` retries
 indefinitely.
 
+nvme-fast-io-fail-tmo::
+
+Optional time in seconds before outstanding I/O fails while a controller is
+reconnecting. If this property is absent, the kernel queues I/O until
+`nvme-ctrl-loss-tmo` expires. A configured value must not exceed a finite
+controller-loss timeout. A value of `0` selects immediate fail-fast behavior.
+
 nvme-nr-io-queues::
 
 Optional number of I/O queues per controller.
@@ -111,6 +118,7 @@ zfsnvme: nvme-shared
         nvme-keep-alive-tmo 5
         nvme-reconnect-delay 2
         nvme-ctrl-loss-tmo 600
+        nvme-fast-io-fail-tmo 30
         content images
         shared 1
 ----
@@ -130,6 +138,13 @@ Shared access relies on {pve} cluster locking and fencing. Test quorum and
 fencing before placing production guests on the storage. Use independent
 failure domains for the configured paths and make sure the ZFS target itself
 is not a single point of failure.
+
+Choose the all-path outage policy for the workload. The default configuration
+leaves `nvme-fast-io-fail-tmo` unset: transient outages can recover without
+guest block errors, but an I/O request can remain queued for as long as
+`nvme-ctrl-loss-tmo` (600 seconds in the example). Set a shorter fast-I/O-fail
+timeout when the application prefers a prompt block error over a long stall.
+This is a service-level decision, not a universally safer default.
 
 Online resize of a running guest disk is not supported. Stop the VM before
 resizing; the new size is detected when the block device is reopened.
