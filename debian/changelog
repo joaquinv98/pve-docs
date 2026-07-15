@@ -1,3 +1,9 @@
+pve-docs (9.2.3+neatech5) trixie; urgency=medium
+
+  * document the NVMe all-path outage queue-versus-fail policy
+
+ -- Joaquin Varela <joaquinv98@users.noreply.github.com>  Wed, 15 Jul 2026 10:18:00 -0300
+
 pve-docs (9.2.3+neatech4) trixie; urgency=medium
 
   * clarify management endpoint availability requirements
