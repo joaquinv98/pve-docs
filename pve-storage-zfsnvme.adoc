@@ -1,0 +1,141 @@
+[[storage_zfsnvme]]
+ZFS over NVMe/TCP Backend
+-------------------------
+ifdef::wiki[]
+:pve-toplevel:
+:title: Storage: ZFS over NVMe/TCP
+endif::wiki[]
+
+Storage pool type: `zfsnvme`
+
+This backend accesses a remote Linux machine with a ZFS pool and the kernel
+NVMe target through `ssh`. For each guest disk it creates a ZVOL, exports it as
+an NVMe namespace, and connects the {pve} nodes through native Linux NVMe/TCP
+multipath.
+
+The backend supports thin provisioning, snapshots, rollback, templates, linked
+clones, offline resize, and shared-storage live migration. Namespace UUIDs are
+stored as ZFS user properties, and the stable `nvme-uuid` device link is used
+for guest disks.
+
+Configuration
+~~~~~~~~~~~~~
+
+The target needs OpenZFS, configfs, and the `nvmet` and `nvmet-tcp` kernel
+modules. Configure root SSH access like for the ZFS over iSCSI backend. The key
+for the server address is stored at
+`/etc/pve/priv/zfs/<server>_id_rsa`.
+
+Each {pve} node needs `nvme-cli`, the `nvme-tcp` module, native NVMe multipath,
+a unique `/etc/nvme/hostnqn`, and `/etc/nvme/hostid`. Interface names listed in
+the storage configuration must exist on every node where the storage is
+enabled.
+
+The following properties are specific to ZFS over NVMe/TCP:
+
+server::
+
+IP address or DNS name used for the SSH control connection.
+
+pool::
+
+ZFS pool or child dataset used exclusively by this storage definition.
+
+subsysnqn::
+
+NVMe qualified name of the target subsystem. It must be unique across the
+cluster's storage definitions.
+
+nvme-portals::
+
+Comma-separated NVMe/TCP target addresses. The default service is `4420`.
+Specify IPv6 addresses in brackets, for example `[2001:db8::10]:4420`.
+
+nvme-host-ifaces::
+
+Comma-separated local interfaces, matched to `nvme-portals` by position. An
+explicit interface prevents a failed data path from reconnecting over the
+management network.
+
+dhchap-key::
+
+NVMe DH-HMAC-CHAP secret in `DHHC-1` representation. The value is handled as a
+sensitive property and stored below `/etc/pve/priv/storage/` with mode `0600`.
+In-place key rotation is not supported; create a new storage and subsystem for
+a coordinated rotation.
+
+nvme-iopolicy::
+
+Native multipath policy: `round-robin`, `queue-depth`, or `numa`.
+
+nvme-keep-alive-tmo::
+
+Keep-alive timeout in seconds.
+
+nvme-reconnect-delay::
+
+Delay between controller reconnect attempts in seconds.
+
+nvme-ctrl-loss-tmo::
+
+How long a controller remains reconnectable after path loss. `-1` retries
+indefinitely.
+
+nvme-nr-io-queues::
+
+Optional number of I/O queues per controller.
+
+blocksize::
+
+ZFS volume block size.
+
+sparse::
+
+Use ZFS thin provisioning instead of reserving the full virtual size.
+
+.Configuration Example (`/etc/pve/storage.cfg`)
+----
+zfsnvme: nvme-shared
+        server 192.0.2.10
+        pool tank/pve-nvme
+        subsysnqn nqn.2026-07.example:pve-nvme
+        nvme-portals 10.10.1.10:4420,10.10.2.10:4420
+        nvme-host-ifaces ens20,ens21
+        blocksize 16k
+        sparse 1
+        nvme-iopolicy round-robin
+        nvme-keep-alive-tmo 5
+        nvme-reconnect-delay 2
+        nvme-ctrl-loss-tmo 600
+        content images
+        shared 1
+----
+
+The DH-HMAC-CHAP key is intentionally not shown in `storage.cfg`. Set it with
+the storage creation API or web interface.
+
+Security and Availability
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The target uses an ACL for the unique Host NQN of every node and never enables
+`allow_any_host`. DH-HMAC-CHAP authenticates the endpoints, but it does not
+encrypt data. This backend does not configure NVMe/TCP TLS, so use isolated
+storage networks or equivalent protection.
+
+Shared access relies on {pve} cluster locking and fencing. Test quorum and
+fencing before placing production guests on the storage. Use independent
+failure domains for the configured paths and make sure the ZFS target itself
+is not a single point of failure.
+
+Online resize of a running guest disk is not supported. Stop the VM before
+resizing; the new size is detected when the block device is reopened.
+
+Storage Features
+~~~~~~~~~~~~~~~~
+
+.Storage features for backend `zfsnvme`
+[width="100%",cols="m,m,3*d",options="header"]
+|==============================================================================
+|Content types  |Image formats  |Shared |Snapshots |Clones
+|images         |raw            |yes    |yes       |yes
+|==============================================================================

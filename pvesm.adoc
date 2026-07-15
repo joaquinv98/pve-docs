@@ -439,6 +439,8 @@ See Also
 
 * link:/wiki/Storage:_ZFS_over_ISCSI[Storage: ZFS over ISCSI]
 
+* link:/wiki/Storage:_ZFS_over_NVMe_TCP[Storage: ZFS over NVMe/TCP]
+
 endif::wiki[]
 
 ifndef::wiki[]
@@ -470,6 +472,8 @@ include::pve-storage-cephfs.adoc[]
 include::pve-storage-btrfs.adoc[]
 
 include::pve-storage-zfs.adoc[]
+
+include::pve-storage-zfsnvme.adoc[]
 
 
 ifdef::manvolnum[]
