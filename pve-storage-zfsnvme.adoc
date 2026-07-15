@@ -35,7 +35,10 @@ The following properties are specific to ZFS over NVMe/TCP:
 
 server::
 
-IP address or DNS name used for the SSH control connection.
+IP address or DNS name used for the SSH control connection. Connected guest I/O
+uses the independent NVMe/TCP data paths, but capacity reporting and lifecycle
+operations require this endpoint. Use a redundant management DNS name or VIP
+where the storage appliance provides one.
 
 pool::
 
@@ -55,7 +58,8 @@ nvme-host-ifaces::
 
 Comma-separated local interfaces, matched to `nvme-portals` by position. An
 explicit interface prevents a failed data path from reconnecting over the
-management network.
+management network. Activation fails before changing target state if any
+configured interface is missing on the local node.
 
 dhchap-key::
 
@@ -129,6 +133,10 @@ is not a single point of failure.
 
 Online resize of a running guest disk is not supported. Stop the VM before
 resizing; the new size is detected when the block device is reopened.
+
+Removing the storage disconnects the complete subsystem. The backend requires
+its owned ZFS dataset to be empty and also refuses the operation while a local
+process or kernel block holder is using one of its namespaces.
 
 Storage Features
 ~~~~~~~~~~~~~~~~
