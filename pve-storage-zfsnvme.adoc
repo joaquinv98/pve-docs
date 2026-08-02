@@ -26,6 +26,21 @@ modules. Configure root SSH access like for the ZFS over iSCSI backend. The key
 for the server address is stored at
 `/etc/pve/priv/zfs/<server>_id_rsa`.
 
+The NVMe target modules and configfs must be available after a target reboot,
+before a {pve} node attempts to reconcile the exported namespaces. On a Linux
+target using systemd, load the transport at boot and verify the configfs mount:
+
+----
+# echo nvmet_tcp >/etc/modules-load.d/pve-nvmet.conf
+# modprobe nvmet_tcp
+# mountpoint /sys/kernel/config
+----
+
+The target configuration below configfs is derived state. It does not need a
+separate persistence service: after the module and ZFS pool are available, the
+backend reconstructs subsystems, namespaces, UUIDs, ACLs, and ports from the
+ZFS user properties during activation.
+
 Each {pve} node needs `nvme-cli`, the `nvme-tcp` module, native NVMe multipath,
 a unique `/etc/nvme/hostnqn`, and `/etc/nvme/hostid`. Interface names listed in
 the storage configuration must exist on every node where the storage is
