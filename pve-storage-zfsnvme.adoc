@@ -38,8 +38,20 @@ target using systemd, load the transport at boot and verify the configfs mount:
 
 The target configuration below configfs is derived state. It does not need a
 separate persistence service: after the module and ZFS pool are available, the
-backend reconstructs subsystems, namespaces, UUIDs, ACLs, and ports from the
-ZFS user properties during activation.
+backend reconstructs namespaces and UUIDs from ZFS user properties, and
+reconstructs the subsystem, host ACLs, and ports from the shared storage
+configuration during activation.
+
+Do not leave cloud-init device discovery enabled on a dedicated Linux target.
+A guest cloud-init ZVOL contains a `cidata` filesystem and can otherwise be
+mistaken for the target host's own NoCloud datasource during boot. After the
+target host is provisioned, remove cloud-init or disable it according to the
+distribution's documentation. For distributions supporting the standard
+disable marker, use:
+
+----
+# touch /etc/cloud/cloud-init.disabled
+----
 
 Each {pve} node needs `nvme-cli`, the `nvme-tcp` module, native NVMe multipath,
 a unique `/etc/nvme/hostnqn`, and `/etc/nvme/hostid`. Interface names listed in
@@ -75,6 +87,14 @@ Comma-separated local interfaces, matched to `nvme-portals` by position. An
 explicit interface prevents a failed data path from reconnecting over the
 management network. Activation fails before changing target state if any
 configured interface is missing on the local node.
+
+nvme-host-nqns::
+
+Comma-separated contents of `/etc/nvme/hostnqn` from every cluster node that
+may activate the storage. The complete allow-list lets any one node restore all
+host ACLs before publishing the subsystem after a target reboot. Activation
+fails if the local node's Host NQN is absent. Update this property before
+enabling the storage on a newly added cluster node.
 
 dhchap-key::
 
@@ -127,6 +147,7 @@ zfsnvme: nvme-shared
         subsysnqn nqn.2026-07.example:pve-nvme
         nvme-portals 10.10.1.10:4420,10.10.2.10:4420
         nvme-host-ifaces ens20,ens21
+        nvme-host-nqns nqn.2014-08.org.nvmexpress:uuid:11111111-1111-1111-1111-111111111111,nqn.2014-08.org.nvmexpress:uuid:22222222-2222-2222-2222-222222222222
         blocksize 16k
         sparse 1
         nvme-iopolicy round-robin
